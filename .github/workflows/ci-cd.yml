@@ -1,0 +1,54 @@
+name: CI/CD
+ 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+ 
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [api, azure-field, dashboard-app]
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+ 
+      - name: Install dependencies
+        working-directory: ${{ matrix.app }}
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+ 
+      - name: Run tests
+        working-directory: ${{ matrix.app }}
+        run: |
+          if [ -f test_app.py ]; then python -m pytest test_app.py; else echo "No tests yet for ${{ matrix.app }}"; fi
+ 
+  build-and-push:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [api, azure-field, dashboard-app]
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+ 
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.app }}
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/oilgas-${{ matrix.app }}:latest
