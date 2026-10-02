@@ -9,6 +9,7 @@
 .env
 *.pem
 *.key
+*.sh
 
 # OS
 .DS_Store
