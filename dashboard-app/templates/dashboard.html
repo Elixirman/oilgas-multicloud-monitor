@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Oil & Gas Sensor Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1420;
+    --panel: #10202f;
+    --border: #1f3a4d;
+    --text: #e8eef2;
+    --muted: #8ba3b5;
+    --green: #35d07f;
+    --red: #ef4b4b;
+    --accent: #3fa9f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .topbar h1 { margin: 0; font-size: 26px; }
+  .topbar p { margin: 2px 0 0; color: var(--muted); }
+  .tunnel-badge {
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    background: rgba(53,208,127,0.08);
+  }
+  .grid {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .grid > .panel { flex: 1; min-width: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .panel h3 { margin: 0 0 8px; font-size: 15px; color: var(--text); text-align: center; }
+  .gauge { height: 220px; }
+  .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .summary-row div { text-align: left; }
+  .summary-label { color: var(--muted); font-size: 12px; }
+  .summary-value { font-size: 26px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; }
+  .bottom-grid {
+    display: flex;
+    gap: 16px;
+  }
+  .bottom-grid > .panel:nth-child(1) { flex: 1.3; min-width: 0; }
+  .bottom-grid > .panel:nth-child(2) { flex: 1; min-width: 0; }
+  .bottom-grid > .panel:nth-child(3) { flex: 1; min-width: 0; }
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .dot.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.critical { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .tag-ok { color: var(--green); font-size: 12px; }
+  .tag-critical { color: var(--red); font-size: 12px; }
+  .scroll-table { max-height: 260px; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Oil &amp; Gas Sensor Platform</h1>
+    <p>HQ Central - Production</p>
+  </div>
+  <div class="tunnel-badge" id="tunnelBadge">VPN Tunnel Status: CONNECTED 🔒 (AWS &lt;&gt; Azure)</div>
+</div>
+
+<div class="grid">
+  <div class="panel"><h3>System Pressure</h3><div id="gaugePressure" class="gauge"></div></div>
+  <div class="panel"><h3>Ambient Temperature</h3><div id="gaugeTemp" class="gauge"></div></div>
+  <div class="panel"><h3>Average Flow Rate</h3><div id="gaugeFlow" class="gauge"></div></div>
+  <div class="panel">
+    <h3>Operational Summary</h3>
+    <div class="summary-row">
+      <div><div class="summary-label">Avg. Pressure</div><div class="summary-value" id="sumPressure">--</div></div>
+      <div><div class="summary-label">Temperature</div><div class="summary-value" id="sumTemp">--</div></div>
+    </div>
+    <div class="summary-row">
+      <div><div class="summary-label">Active Sensors</div><div class="summary-value">6</div></div>
+      <div><div class="summary-label">Uptime</div><div class="summary-value">45h</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-grid">
+  <div class="panel scroll-table">
+    <h3 style="text-align:left">Live Readings</h3>
+    <table>
+      <thead><tr><th>Sensor ID</th><th>Value</th><th>Unit</th><th>Recorded At</th></tr></thead>
+      <tbody id="readingsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3 style="text-align:left">Status Indicators Panel</h3>
+    <div id="statusPanel"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="text-align:left">Operational Summary</h3>
+    <div class="summary-row">
+      <div><div class="summary-label">Avg. Pressure</div><div class="summary-value" id="sumPressure2">--</div></div>
+      <div><div class="summary-label">Uptime</div><div class="summary-value">45.6</div></div>
+    </div>
+    <div class="summary-row">
+      <div><div class="summary-label">Active Sensors</div><div class="summary-value">30</div></div>
+      <div><div class="summary-label">Next Maintenance</div><div class="summary-value" style="font-size:14px">--</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function makeGauge(domId, min, max, unit, color) {
+  const chart = echarts.init(document.getElementById(domId));
+  const option = {
+    series: [{
+      type: 'gauge',
+      min, max,
+      progress: { show: true, width: 10 },
+      axisLine: { lineStyle: { width: 10 } },
+      pointer: { itemStyle: { color: 'auto' } },
+      axisTick: { show: false },
+      splitLine: { length: 8, lineStyle: { color: '#8ba3b5' } },
+      axisLabel: { color: '#8ba3b5', fontSize: 10, distance: 15 },
+      detail: {
+        valueAnimation: true,
+        formatter: '{value} ' + unit,
+        color: '#e8eef2',
+        fontSize: 18,
+        offsetCenter: [0, '65%']
+      },
+      data: [{ value: 0 }]
+    }]
+  };
+  chart.setOption(option);
+  return chart;
+}
+
+const gPressure = makeGauge('gaugePressure', 0, 2000, 'psi');
+const gTemp = makeGauge('gaugeTemp', 0, 100, '°C');
+const gFlow = makeGauge('gaugeFlow', 0, 400, 'bbl/hr');
+
+function statusRow(label, ok) {
+  return `<div class="status-row">
+    <div class="status-left">
+      <div class="dot ${ok ? 'ok' : 'critical'}"></div>
+      <span>${label} <span class="${ok ? 'tag-ok' : 'tag-critical'}">[STATUS: ${ok ? 'OK' : 'CRITICAL'}]</span></span>
+    </div>
+  </div>`;
+}
+
+function renderStatus(critical) {
+  const rows = [
+    statusRow('Press-01', true),
+    statusRow('Temp-02', true),
+    statusRow('Flow-03', true),
+    statusRow('Vib-04', true),
+    statusRow('Pipeline Leak', !critical),
+  ];
+  document.getElementById('statusPanel').innerHTML = rows.join('');
+}
+
+async function refresh() {
+  try {
+    const res = await fetch('/api/readings');
+    const data = await res.json();
+
+    gPressure.setOption({ series: [{ data: [{ value: data.pressure }] }] });
+    gTemp.setOption({ series: [{ data: [{ value: data.temperature }] }] });
+    gFlow.setOption({ series: [{ data: [{ value: data.flow }] }] });
+
+    document.getElementById('sumPressure').textContent = data.pressure;
+    document.getElementById('sumPressure2').textContent = data.pressure;
+    document.getElementById('sumTemp').textContent = data.temperature + ' °C';
+
+    document.getElementById('readingsBody').innerHTML = data.rows.map(r =>
+      `<tr><td>${r.sensor_id}</td><td>${r.value}</td><td>${r.unit}</td><td>${r.recorded_at}</td></tr>`
+    ).join('');
+
+    renderStatus(false); // flip to true to simulate a leak alert
+  } catch (e) {
+    console.error('Failed to refresh readings', e);
+  }
+}
+
+async function refreshTunnel() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    document.getElementById('tunnelBadge').textContent =
+      `VPN Tunnel Status: ${data.tunnel} 🔒 (${data.link})`;
+  } catch (e) {
+    document.getElementById('tunnelBadge').textContent = 'VPN Tunnel Status: UNKNOWN';
+  }
+}
+
+refresh();
+refreshTunnel();
+setInterval(refresh, 5000);
+setInterval(refreshTunnel, 15000);
+</script>
+
+</body>
+</html>
