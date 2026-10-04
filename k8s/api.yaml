@@ -12,8 +12,11 @@ spec:
     spec:
       containers:
         - name: api
-          image: yourdockerhubuser/oilgas-api:latest
+          image: elixirman/oilgas-api:latest
           ports: [{ containerPort: 6000 }]
+          env:
+            - name: DB_HOST
+              value: "database"
           envFrom:
             - secretRef: { name: db-secret }
           livenessProbe:
