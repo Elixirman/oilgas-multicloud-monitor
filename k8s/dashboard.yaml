@@ -12,8 +12,12 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: elixirman/oilgas-dashboard:latest
+          image: elixirman/oilgas-dashboard-app:latest
           ports: [{ containerPort: 5000 }]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
           env:
             - name: API_URL
               value: "http://api:6000"
