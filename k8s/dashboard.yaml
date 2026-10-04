@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: yourdockerhubuser/oilgas-dashboard:latest
+          image: elixirman/oilgas-dashboard:latest
           ports: [{ containerPort: 5000 }]
           env:
             - name: API_URL
