@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oil &amp; Gas Multi-Cloud Monitor: How It Works</title>
+<style>
+:root{--bg:#fff;--bg2:#F0F9FF;--card:#fff;--line:#BAE6FD;--ink:#0C4A6E;--mute:#475569;--sky:#0EA5E9;--sky2:#E0F2FE;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1220;--bg2:#0F1B2E;--card:#12213A;--line:#1E4A6E;--ink:#E0F2FE;--mute:#94A3B8;--sky2:#0B2A44}}
+:root[data-theme="dark"]{--bg:#0B1220;--bg2:#0F1B2E;--card:#12213A;--line:#1E4A6E;--ink:#E0F2FE;--mute:#94A3B8;--sky2:#0B2A44}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(135deg,#0EA5E9,#38BDF8);color:#fff;padding:18px 20px}
+header h1{margin:0;font-size:20px}header p{margin:4px 0 0;opacity:.95;font-size:14px}
+main{max-width:1700px;margin:0 auto;padding:14px}
+.stage{background:#1F1F1E;border:1px solid #3A3A38;border-radius:14px;padding:10px;overflow-x:auto}
+svg{width:100%;min-width:1300px;height:auto;display:block}
+.node{cursor:pointer;transition:opacity .4s}.node rect{transition:stroke-width .2s}
+
+.node:hover rect{stroke-width:3}.dim{opacity:.28}
+.node.on rect{filter:drop-shadow(0 0 7px #7DD3FC)}
+.pa{fill:none;stroke-width:2.4;opacity:.4;transition:opacity .4s}.pa.on{opacity:1}
+.ghost{opacity:0;transition:opacity .6s}.ghost.show{opacity:1}
+.panel{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:760px){.panel{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 6px;font-size:18px}.card h3{margin:12px 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--sky)}
+.card p{margin:0;color:var(--ink)}.watch{background:var(--sky2);border-left:4px solid var(--sky);padding:8px 10px;border-radius:8px;margin-top:12px;color:var(--ink);font-size:14px}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+button{background:var(--sky);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.alt{background:var(--sky2);color:var(--ink);border:1px solid var(--line)}button:disabled{opacity:.4;cursor:default}
+.dots{display:flex;gap:6px;flex:1;min-width:120px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line);cursor:pointer}.dots i.a{background:var(--sky)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-top:8px}.legend b{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+#hint{color:var(--mute)}ul{margin:2px 0 0;padding-left:18px;color:var(--ink)}li{margin:2px 0}table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}td,th{border-bottom:1px solid var(--line);padding:4px;text-align:left;color:var(--ink)}th{color:var(--sky)}.legend b{height:4px}
+.node.bad rect{stroke:#F43F5E!important;stroke-width:3.5;animation:bl 1s infinite alternate}@keyframes bl{from{filter:drop-shadow(0 0 9px #F43F5E)}to{filter:drop-shadow(0 0 1px #F43F5E)}}.node.fixed rect{stroke:#34D399!important;stroke-width:3.5;filter:drop-shadow(0 0 9px #34D399)}.pa.dead{stroke:#F43F5E!important;stroke-dasharray:6 5;opacity:1}#fb button{background:#FEE2E2;color:#7F1D1D;border:1px solid #FCA5A5}#fb button:not(.alt){background:#F43F5E;color:#fff}
+</style></head><body>
+<header><h1>Oil &amp; Gas Multi-Cloud Monitor: how it works</h1><p>A field site on Azure sends pipeline sensor data over a private VPN to AWS, where Kubernetes stores and shows it. Press Next, or click any box.</p></header>
+<main>
+<div class="stage"><svg id="svg" viewBox="0 0 1800 840" role="img" aria-label="Architecture simulation"></svg></div>
+<div class="legend"><span><b style="background:#EF9F27"></b>Field to HQ (sensor data)</span><span><b style="background:#378ADD"></b>HQ to Field (replies)</span><span><b style="background:#94A3B8"></b>Browser traffic</span><span><b style="background:repeating-linear-gradient(90deg,#64748B 0 5px,transparent 5px 9px)"></b>Build and image delivery</span></div>
+<div class="ctl"><button id="prev" class="alt">Back</button><button id="next">Next</button><button id="play" class="alt">Auto-play</button><div class="dots" id="dots"></div></div>
+<div class="panel">
+<div class="card"><h3 id="sn"></h3><h2 id="st"></h2><p id="sx"></p><div class="watch" id="sw"></div></div>
+<div class="card" id="cd"><h3>Component</h3><p id="hint">Click any box in the diagram to see what it is, what it does here, and what it connects to.</p></div>
+</div><div class="card" style="margin-top:14px"><h3>Break it mode</h3><p>Cause a real fault from our build, see where it breaks, then learn how to find and fix it.</p><div class="ctl" id="fb"></div><div id="fr"></div></div>
+</main>
+<script>
+const C={aws:"#FF9900",az:"#0078D4",k8:"#326CE5",pg:"#336791",dk:"#2496ED",gh:"#24292F",ac:"#2088FF",cf:"#8C4FFF",us:"#0EA5E9",iam:"#DD344C"};
+const N=[
+["us",24,180,170,64,"Users","Browser, HTTPS",C.us],["cf",24,287,170,64,"CloudFront","HTTPS to HTTP :80",C.cf],
+["igw",262,291,138,56,"hq-igw","Internet gateway",C.aws],["alb",456,287,228,64,"ALB dashboard-ingress","HTTP :80, two AZs",C.aws],
+["rt",452,376,236,100,"Route tables",["public: 0.0.0.0/0 to igw","private: 0.0.0.0/0 to nat","both: 10.1.0.0/16 to vgw"],C.aws],
+["sg",452,490,236,76,"Security groups",["alb-sg, pod-sg, api-sg, test-sg","click for rules"],C.aws],["nat",456,576,228,56,"hq-nat-gw","NAT gateway, private egress",C.aws],
+["dash",772,292,116,54,"dashboard","2 pods, HPA",C.k8],["ctl",898,292,130,54,"add-ons","LB ctrl, metrics",C.k8],["api2",898,250,130,34,"new api pod","",C.k8],
+["api",772,380,116,54,"api","2 pods, HPA",C.k8],["db",914,380,104,54,"database","Postgres x1",C.pg],
+["nlb",756,486,254,54,"api-internal NLB","TCP 6000, private only",C.aws],["vgw",1048,486,184,54,"hq-vgw","Virtual private gateway",C.aws],
+["iam1",1086,200,148,34,"Cluster role","",C.iam],["iam2",1086,244,148,34,"Node role","",C.iam],["iam3",1086,288,148,34,"LB ctrl role","",C.iam],["iam4",1086,332,148,34,"Pod roles","",C.iam],
+["gw",1462,486,222,54,"field-vpn-gw","VpnGw1, route-based",C.az],["vm",1462,262,222,54,"field-test-vm","Sensor container, 4 sensors",C.az],["nsg",1462,226,222,26,"field-nsg: SSH, ICMP","",C.az],
+["lng",1420,620,154,54,"aws-hq-lng","10.0.0.0/16",C.az],["conn",1582,620,146,54,"field-to-hq","IKEv2, shared PSK",C.az],
+["gh",24,752,170,70,"GitHub repo","main, PR merges",C.gh],["act",250,752,170,70,"GitHub Actions","Test, build, push",C.ac],["hub",470,744,200,86,"Docker Hub",["oilgas-api","oilgas-dashboard-app","oilgas-azure-field"],C.dk]];
+const Z=[[250,96,998,600,C.aws,"--bg2",0,"AWS (HQ)  us-east-1",270,122],[300,140,770,530,"#94A3B8","--card",1,"VPC hq-vpc  10.0.0.0/16",320,162],
+[440,190,260,460,"#94A3B8","--sky2",1,"Public subnets",452,210,"10.0.1.0/24, 10.0.3.0/24"],[740,190,310,370,"#94A3B8","--sky2",1,"Private subnet",752,210,"10.0.2.0/24"],
+[756,244,278,208,C.k8,"--card",0,"EKS oilgas-cluster",768,264,"4 x t3.small nodes"],[1078,170,164,206,C.iam,"--card",1,"IAM roles",1090,186],
+[1258,140,140,530,"#94A3B8","--card",1,"IPsec VPN",1270,162,"aws-azure-vpn, static, IKEv2, tunnel 1"],[1408,96,330,600,C.az,"--bg2",0,"Azure (Field office)  East US",1426,122],
+[1422,140,302,440,"#94A3B8","--card",1,"VNet field-vnet  10.1.0.0/16",1438,162],[1438,180,270,150,"#94A3B8","--sky2",1,"field-subnet",1450,198,"10.1.1.0/24"],[1438,436,270,124,"#94A3B8","--sky2",1,"GatewaySubnet",1450,454,"10.1.2.0/27"]];
+const P={build:"M194 787L250 787M420 787L470 787",pull:"M570 742L570 634",pullnat:"M686 604L720 604L720 430L754 430",pullaz:"M672 787L1768 787L1768 289L1686 289",
+br1:"M109 244L109 287",br2:"M196 319L260 319",br3:"M402 319L454 319",br4:"M686 319L770 319",br5:"M830 346L830 380",br6:"M890 407L912 407",
+s1:"M1598 316L1598 486",s2:"M1460 500L1232 500",s3:"M1048 500L1012 500",s4:"M800 484L800 436",s5:"M890 398L912 398",r1:"M1658 486L1658 316",r2:"M1232 526L1460 526",r3:"M1012 526L1048 526",r4:"M860 436L860 484",r5:"M912 418L890 418"};
+const F={build:["build","#B4B2A9"],pull:["pull,pullnat","#B4B2A9"],pullaz:["pullaz","#B4B2A9"],br:["br1,br2,br3,br4,br5,br6","#B4B2A9"],snd:["s1,s2,s3,s4,s5","#EF9F27"],rep:["r1,r2,r3,r4,r5","#378ADD"]};
+const SG=[["alb-sg","IN","443/TCP","0.0.0.0/0"],["alb-sg","OUT","all","all (default)"],["pod-sg","IN","80/TCP","alb-sg"],["pod-sg","OUT","all","all (default)"],["api-sg","IN","5000/TCP (app uses 6000)","10.1.0.0/16 Azure"],["api-sg","OUT","all","all (default)"],["test-sg","IN","ICMP","10.1.0.0/16 Azure"],["test-sg","IN","22/TCP","admin IP/32"],["test-sg","OUT","all","all (default)"]];
+const NS=[["100 Allow-SSH-Admin","IN","22/TCP","admin IP/32"],["110 Allow-ICMP-AWS","IN","ICMP","10.0.0.0/16 AWS"],["65000 AllowVnetIn","IN","any","VirtualNetwork (includes VPN)"],["65500 DenyAllIn","IN","any","everything else"],["100 Allow-Outbound-AWS","OUT","any","10.0.0.0/16 AWS"],["65001 AllowInternetOut","OUT","any","Internet (image pulls)"],["65500 DenyAllOut","OUT","any","everything else"]];
+const D={
+us:["Users (browser)","Anyone opening the dashboard link.","Requests the page over HTTPS and sees live readings.",["Link: https://&lt;id&gt;.cloudfront.net","Browsers upgrade plain http links to https"],"CloudFront"],
+cf:["CloudFront","A worldwide front desk that gives us free HTTPS.","Takes HTTPS from the browser and forwards plain HTTP to the ALB.",["Origin: the ALB, HTTP only, port 80","Cache policy CachingDisabled so readings stay live"],"Users, Internet gateway"],
+igw:["Internet gateway (hq-igw)","The VPC's door to the internet.","Lets the ALB and NAT gateway reach, and be reached from, the internet.",["Attached to hq-vpc","Public route table sends 0.0.0.0/0 here"],"CloudFront, ALB, NAT"],
+alb:["ALB (Application Load Balancer)","A smart receptionist for web traffic. It reads each HTTP request and picks a healthy pod.","Built from the Kubernetes Ingress by the Load Balancer Controller. Sends browser traffic to the dashboard pods.",["Layer 7, listens on HTTP 80","Needs 2 public subnets in 2 zones tagged kubernetes.io/role/elb=1","Targets are pod IPs directly","Controller also creates its own managed security group"],"Internet gateway, dashboard pods"],
+rt:["Route tables","Signposts that tell traffic where to go.","Decide which door each subnet uses.",["hq-public-rt: 0.0.0.0/0 to hq-igw","hq-private-rt: 0.0.0.0/0 to hq-nat-gw","Both: 10.1.0.0/16 to hq-vgw (route propagation ON)","Azure learns 10.0.0.0/16 from the connection and aws-hq-lng"],"Subnets, gateways"],
+sg:["Security groups (AWS firewalls)","Stateful firewalls on AWS resources: allowed in means replies are allowed out automatically.","Only listed traffic gets in. Everything else is blocked.",["Default outbound: allow all","Ping from Azure needs ICMP in test-sg","Missing ICMP rule was one cause of failed pings"],"ALB, pods, test instance",SG],
+nat:["NAT gateway (hq-nat-gw)","A one-way exit door for private machines.","Lets private pods download images from Docker Hub, while nothing outside can connect in.",["Sits in the public subnet with an Elastic IP","Billed per hour: delete it after use"],"EKS nodes, Docker Hub"],
+dash:["dashboard pods","A pod is one running copy of an app. A Deployment keeps 2 copies alive.","Shows the readings page and asks the api for data.",["Image elixirman/oilgas-dashboard-app","Service dashboard: ClusterIP 80 to pod port 5000","API_URL = http://api:6000","HPA: 2 to 5 pods at 70% CPU (CPU request 100m)","Health check /health"],"ALB, api"],
+ctl:["kube-system helpers","Two helpers living inside the cluster.","The Load Balancer Controller builds the ALB and NLB. metrics-server measures CPU for autoscaling.",["Controller installed with Helm, 2 replicas","Uses the LB controller IAM role (IRSA)","Reads Ingress and Services of type LoadBalancer"],"ALB, NLB, HPA"],
+api:["api pods","The brain: a small Flask web service.","Saves sensor readings and serves them to the dashboard.",["Port 6000: POST /api/ingest, GET readings, /health","Service api: ClusterIP 6000 (internal only)","DB_HOST=database, password from secret db-secret","HPA 2 to 5 pods, CPU request 100m"],"NLB, dashboard, database"],
+db:["database (Postgres 16)","The filing cabinet.","Stores every reading in the readings table.",["Service database: port 5432, internal only","Table created from db/schema.sql (500 errors until loaded)","No persistent volume: data is lost if the pod restarts"],"api"],
+api2:["Extra api pod","What autoscaling adds under load.","The HPA starts another copy when CPU passes 70%, and removes it when quiet.",["Max 5 pods","Needs a free pod slot on a node (t3.small: 11 pods each)"],"NLB, database"],
+nlb:["NLB (Network Load Balancer)","A private doorman for raw TCP traffic, not for browsers.","Gives the Azure sensor one fixed address for the API, reachable only through the VPN.",["Layer 4, TCP 6000, scheme internal","Service api-internal, type LoadBalancer","Private subnet tagged kubernetes.io/role/internal-elb=1"],"VPN gateway, api pods"],
+vgw:["AWS VPN gateway (hq-vgw)","The AWS end of the tunnel.","Ends the encrypted tunnel and routes Azure traffic (10.1.0.0/16).",["Attached to hq-vpc","Static routing, tunnel 1 used","Route propagation on both route tables"],"Azure VPN gateway, NLB"],
+gw:["Azure VPN gateway (field-vpn-gw)","The Azure end of the tunnel.","Encrypts traffic from the Field VM and decrypts replies.",["VpnGw1, route-based","Lives in GatewaySubnet 10.1.2.0/27 (exact name required)","No NSG on GatewaySubnet","Takes 30 to 45 minutes to create"],"Field VM, AWS VPN gateway"],
+vm:["Field VM (sensor)","The simulated oil field.","Runs a container that posts 4 readings every 5 seconds.",["Ubuntu 22.04 with Docker, image oilgas-azure-field","API_URL must include the path: http://&lt;NLB&gt;:6000/api/ingest","Sensors: PRESS-01, TEMP-02, FLOW-03, VIB-04","SSH by key, from the admin IP only"],"Azure VPN gateway, Docker Hub"],
+nsg:["field-nsg (Azure firewall)","Azure's firewall for the field subnet. Rules run lowest number first.","Allows admin SSH and pings from AWS, blocks the rest.",["Attached to field-subnet only","Also stateful"],"Field VM",NS],
+lng:["Local network gateway (aws-hq-lng)","Azure's address book entry for AWS.","Tells Azure which addresses live on the AWS side and where to send them.",["Address space 10.0.0.0/16","IP = AWS tunnel 1 outside IP"],"Azure VPN gateway"],
+conn:["VPN connection (field-to-hq)","The agreement between both gateways.","Brings the tunnel up using a shared key.",["IKEv2, shared PSK identical on both sides","Shows Connected when healthy"],"Azure VPN gateway, aws-hq-lng"],
+gh:["GitHub","Where the team's code lives.","Branches and PRs merge into main, which triggers Actions.",["Repo oilgas-multicloud-monitor"],"GitHub Actions"],
+act:["GitHub Actions","A robot that runs on every merge.","Tests, builds Docker images and pushes them to Docker Hub. It does not deploy.",["Workflow ci-cd.yml","Docker Hub login stored as repo secrets","Deploys were done by hand with kubectl"],"GitHub, Docker Hub"],
+hub:["Docker Hub","A public shelf of ready-to-run app images.","Holds the three images that EKS and the Field VM pull.",["oilgas-api, oilgas-dashboard-app, oilgas-azure-field","Tag :latest"],"NAT gateway, Field VM"],
+iam1:["EKS cluster role","Lets the EKS control plane manage AWS resources for the cluster.","Created for the cluster by eksctl.",["Managed policy AmazonEKSClusterPolicy","Exact role name was not recorded"],"EKS control plane"],
+iam2:["Node role (eks-node-role)","The identity of the worker nodes.","Lets nodes join the cluster and manage pod networking.",["AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy","Monitoring add-on was denied xray:GetSamplingRules: harmless","Images come from Docker Hub, so no registry policy is used"],"EKS nodes"],
+iam3:["LB controller role (IRSA)","A role only the controller's Service Account can use.","Lets the controller create and manage the ALB and NLB.",["AmazonEKSLoadBalancerControllerRole","Policy AWSLoadBalancerControllerIAMPolicy","Old policy lacked ec2:DescribeRouteTables (403): fixed with the current policy"],"Load Balancer Controller"],
+iam4:["Pod roles","IRSA gives a single pod its own AWS role.","api, dashboard and database call no AWS APIs, so they have none.",["If they tried, they would fall back to the node role","Docker Hub uses repo secrets, not IAM","Azure side uses an SSH key and the PSK, no managed identity"],"Pods"]};
+const S=[
+["The big picture","A field site sends readings to HQ privately. People watch them on a dashboard. Below is every part, in the order we built it.","Click any box for what it is, its settings and its firewall or IAM rules.",["*"],[]],
+["1. Ship the code","Developers push to GitHub. GitHub Actions tests the code, builds three Docker images, and pushes them to Docker Hub.","Wrong image name gives ImagePullBackOff. Ours is oilgas-dashboard-app.",["gh","act","hub"],["build"]],
+["2. Build the networks","AWS gets a VPC (10.0.0.0/16) with public and private subnets, an internet gateway, a NAT gateway and route tables. Azure gets a VNet (10.1.0.0/16). The ranges must never overlap.","Azure's default 10.0.0.0/16 would clash with AWS. Remove it.",["igw","rt","nat","vgw","gw"],[]],
+["3. Lock the doors","Security groups (AWS) and the NSG (Azure) allow only what is needed. Both are stateful, so replies are allowed automatically.","Pings need ICMP allowed on both sides. Click the firewall boxes for the rules.",["sg","nsg","alb","nlb","vm"],[]],
+["4. Join them with a VPN","An encrypted IPsec tunnel links the two gateways, so traffic between clouds never crosses the public internet.","Pings failed first because ICMP rules and route propagation were missing.",["vgw","gw","lng","conn","rt"],["snd","rep"]],
+["5. Start the cluster","EKS runs the pods. Nodes in the private subnet pull images from Docker Hub through the NAT gateway. Database first, then api, then dashboard.","t3.small nodes hold only 11 pods each. Add nodes if pods stay Pending.",["ctl","dash","api","db","nat","hub"],["pull","pullaz"]],
+["6. Give permissions","IAM roles say who may do what. The cluster has a role, nodes have a role, and the Load Balancer Controller has its own role through IRSA. App pods need none.","Missing ec2:DescribeRouteTables made the controller fail with 403.",["iam1","iam2","iam3","iam4","ctl"],[]],
+["7. Open the front door","An Ingress makes Kubernetes build an ALB. CloudFront adds HTTPS on top. Browsers reach the dashboard through both.","The ALB needs two public subnets in different zones, tagged for ELB.",["us","cf","igw","alb","dash","ctl"],["br"]],
+["8. Sensors send data","Every 5 seconds the Field VM posts readings. They go through the tunnel, the private NLB, the api and into the database. Replies return the same way.","The API returned 500 until db/schema.sql created the readings table.",["vm","gw","vgw","nlb","api","db"],["snd","rep"]],
+["9. The dashboard shows it","The dashboard asks the api for the latest readings, which come from the database. Stop the sensor and the numbers freeze: proof the data comes from Azure.","Use the CloudFront link for https. The raw ALB is http only.",["us","cf","igw","alb","dash","api","db"],["br"]],
+["10. Scale and recover","When CPU passes 70% the HPA adds api or dashboard pods, up to 5. The metrics come from metrics-server.","HPA shows unknown until pods have CPU requests.",["api","api2","ctl","nlb","db"],["rep"]]];
+const NSV="http://www.w3.org/2000/svg",svg=document.getElementById("svg"),FILL={"--bg2":"#353533","--card":"#2A2A28","--sky2":"#242423"};
+const T={p:["#3C3489","#AFA9EC","#CECBF6","#AFA9EC"],t:["#085041","#5DCAA5","#9FE1CB","#5DCAA5"],n:["#2A2A28","#888780","#E8E6DD","#B4B2A9"]};
+const EXT={[C.gh]:"#8B949E",[C.ac]:"#2088FF",[C.dk]:"#2496ED",[C.us]:"#38BDF8"};
+const kind=c=>c==C.az?"t":(c==C.gh||c==C.ac||c==C.dk||c==C.us)?"n":"p";
+const el=(t,a,p)=>{const e=document.createElementNS(NSV,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
+const tx=(x,y,s,z,f,w,an,p)=>{const e=el("text",{x,y:y+z*.36,"font-size":z,"font-weight":w||400,fill:f,"text-anchor":an||"middle","font-family":"Segoe UI,Roboto,Helvetica,Arial,sans-serif"},p);e.textContent=s;return e};
+const mk=(id,c,st)=>`<marker id="${id}" viewBox="0 0 10 10" refX="${st?2:8}" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="${st?"M8 1L2 5L8 9":"M2 1L8 5L2 9"}" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>`;
+const CL={g:"#B4B2A9",a:"#EF9F27",b:"#378ADD"};
+el("defs",{}).innerHTML=Object.entries(CL).map(([k,c])=>mk("m"+k,c,0)+mk("m"+k+"s",c,1)).join("");
+Z.forEach(z=>{const lb=z[7].replace("  "," · ");el("rect",{x:z[0],y:z[1],width:z[2],height:z[3],rx:14,fill:FILL[z[5]],stroke:"#888780","stroke-width":1.2,"stroke-dasharray":z[6]?"6 4":"0"});
+if(lb=="IPsec VPN"){tx(z[0]+z[2]/2,z[1]+30,lb,16,"#E8E6DD",700);["aws-azure-vpn","static route","IKEv2, tunnel 1","shared PSK"].forEach((t,i)=>tx(z[0]+z[2]/2,z[1]+56+i*20,t,14,"#B4B2A9"));
+tx(1328,452,"Field to HQ",14,"#EF9F27",700);tx(1328,472,"POST /api/ingest",14,"#EF9F27");tx(1328,558,"HQ to Field",14,"#5FA8F0",700);tx(1328,578,"replies, ping",14,"#5FA8F0")}
+else{tx(z[8],z[9],lb,16,"#E8E6DD",700,"start");if(z[10])tx(z[8],z[9]+19,z[10],14,"#B4B2A9",400,"start")}});
+tx(24,730,"Build and delivery",14,"#B4B2A9",700,"start");
+Object.keys(P).forEach(k=>{const c=/^s/.test(k)?"a":/^r/.test(k)?"b":"g",d=/^(build|pull)/.test(k),br=/^br/.test(k);
+el("path",{id:"p-"+k,d:P[k],class:"pa","stroke":CL[c],"stroke-dasharray":d?"7 5":"0","marker-end":`url(#m${c})`,"marker-start":br?`url(#m${c}s)`:""})});
+N.forEach(n=>{const [id,x,y,w,h,t,sub,col]=n,k=kind(col),c=T[k],st=EXT[col]||c[1];
+const g=el("g",{class:"node"+(id=="api2"?" ghost":""),id:"n-"+id,"data-id":id,"data-c":col});
+el("rect",{x,y,width:w,height:h,rx:9,fill:c[0],stroke:st,"stroke-width":1.6},g);
+if(Array.isArray(sub)){tx(x+12,y+20,t,16,c[2],700,"start",g);sub.forEach((s,i)=>tx(x+12,y+42+i*17,s,14,c[3],400,"start",g))}
+else if(h<=34){tx(x+w/2,y+h/2,t,15,c[2],700,"middle",g)}
+else if(h<=26+1){tx(x+w/2,y+h/2,t,14,c[2],600,"middle",g)}
+else{tx(x+w/2,y+h/2-10,t,16,c[2],700,"middle",g);tx(x+w/2,y+h/2+12,sub,14,c[3],400,"middle",g)}});
+const nsg=document.getElementById("n-nsg");nsg.querySelector("text").setAttribute("font-size",14);
+const pk=el("g",{id:"pk"});
+let cur=0,fl=[],play=null;const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+function show(i){cur=i;clearFault();const s=S[i];sn.textContent=i==0?"Overview":"Step "+i+" of "+(S.length-1);st.textContent=s[0].replace(/^\d+\.\s/,"");sx.textContent=s[1];sw.innerHTML="<b>Watch out:</b> "+s[2];
+const act=s[3],all=act[0]=="*";
+document.querySelectorAll(".node").forEach(e=>{const id=e.dataset.id,on=all||act.includes(id);e.classList.toggle("dim",!on&&id!="api2");e.classList.toggle("on",on&&!all)});
+document.getElementById("n-api2").classList.toggle("show",i==9);
+document.querySelectorAll(".pa").forEach(p=>p.classList.remove("on"));
+fl=[];pk.innerHTML="";(all?["br","snd","rep"]:s[4]).forEach(f=>{const [ps,c]=F[f];ps.split(",").forEach(p=>{const e=document.getElementById("p-"+p);e.classList.add("on");for(let j=0;j<3;j++){const d=el("circle",{r:5.5,fill:c,style:"filter:drop-shadow(0 0 4px "+c+")"},pk);fl.push({el:e,d,len:e.getTotalLength(),o:j/3})}})});
+dots.querySelectorAll("i").forEach((d,j)=>d.classList.toggle("a",j<=i));prev.disabled=i==0;next.disabled=i==S.length-1}
+function tick(t){fl.forEach(f=>{let u=((t/2400)+f.o)%1;if(reduce)u=.5;const p=f.el.getPointAtLength(u*f.len);f.d.setAttribute("cx",p.x);f.d.setAttribute("cy",p.y)});requestAnimationFrame(tick)}
+S.forEach((s,i)=>{const d=document.createElement("i");d.title=s[0];d.onclick=()=>show(i);dots.appendChild(d)});
+prev.onclick=()=>show(Math.max(0,cur-1));next.onclick=()=>show(Math.min(S.length-1,cur+1));
+document.onkeydown=e=>{if(e.key=="ArrowRight")next.click();if(e.key=="ArrowLeft")prev.click()};
+document.getElementById("play").onclick=()=>{const b=document.getElementById("play");if(play){clearInterval(play);play=null;b.textContent="Auto-play";return}b.textContent="Pause";play=setInterval(()=>{show(cur>=S.length-1?0:cur+1)},7000)};
+svg.addEventListener("click",e=>{const n=e.target.closest(".node");if(!n)return;const d=D[n.dataset.id];
+cd.innerHTML=`<h3><span class="dot" style="background:${n.dataset.c}"></span>Component</h3><h2>${d[0]}</h2><h3>In plain words</h3><p>${d[1]}</p><h3>Its job here</h3><p>${d[2]}</p><h3>Key settings</h3><ul>${d[3].map(f=>"<li>"+f+"</li>").join("")}</ul><h3>Connects to</h3><p>${d[4]}</p>`+(d[5]?`<h3>Rules (inbound and outbound)</h3><table><tr><th>Rule</th><th>Dir</th><th>Port</th><th>Peer</th></tr>${d[5].map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")}</table>`:"")});
+const FT=[
+{n:"Sensor stopped",bad:"vm",ok:"br1,br2,br3,br4,br5,br6",dead:"s1",mk:[1598,400],see:"Dashboard numbers freeze. Nothing new reaches the database.",find:["On field-test-vm: sudo docker ps shows no sensor container","In Postgres, max(recorded_at) falls behind now()"],fix:"On the VM run: sudo docker start sensor"},
+{n:"No route propagation",bad:"rt",ok:"s1,s2,s3,s4,s5,r5,r4",dead:"r3,r2,r1",mk:[1030,512],see:"Tunnel shows UP, but HQ cannot send replies back to Azure. Ping and replies time out.",find:["VPC, Route Tables, Routes tab: no 10.1.0.0/16 line","The Propagated column is not Yes"],fix:"Route table, Route propagation tab, Edit, tick hq-vgw, Save. Do it on both route tables."},
+{n:"ICMP not allowed",bad:"sg,nsg",ok:"s1,s2,s3,s4,s5,r1,r2,r3,r4,r5",dead:"",mk:null,see:"Sensor data (TCP) still works, but ping times out. Ping uses ICMP and no rule allows it.",find:["AWS: test-sg has no All ICMP rule from 10.1.0.0/16","Azure: field-nsg has no ICMP rule from 10.0.0.0/16","Windows hosts also block ICMP in the OS firewall"],fix:"Add the ICMP allow rule to both test-sg and field-nsg."},
+{n:"Wrong PSK",bad:"vgw,gw,conn",ok:"s1,r1,br1,br2,br3,br4,br5,br6",dead:"s2,r2",mk:[1346,513],see:"The tunnel stays Down. Nothing crosses between the clouds.",find:["AWS: Tunnel details shows Down","Azure: field-to-hq is not Connected","The keys differ by even one character"],fix:"Re-enter the identical key on both sides. AWS allows letters, numbers, dot and underscore only: no ! character."},
+{n:"Wrong image name",bad:"dash",ok:"br1,br2,br3",dead:"br4,br5,br6",mk:[728,330],see:"Browser gets 503. Dashboard pods show ImagePullBackOff.",find:["kubectl get pods shows ImagePullBackOff","kubectl describe pod: repository does not exist"],fix:"Use elixirman/oilgas-dashboard-app:latest in k8s/dashboard.yaml, then kubectl apply."},
+{n:"Table missing",bad:"db",ok:"s1,s2,s3,s4",dead:"s5,r5,br6",mk:[901,400],see:"Sensor posts return HTTP 500. The dashboard stays empty.",find:["kubectl logs deployment/api: relation readings does not exist"],fix:"Load db/schema.sql into Postgres with kubectl exec and psql."},
+{n:"ALB never created",bad:"ctl,alb,iam3",ok:"br1,br2",dead:"br3,br4",mk:[428,319],see:"Ingress ADDRESS stays empty. There is no public link.",find:["kubectl describe ingress shows FailedBuildModel with a 403","Message: not authorized to perform ec2:DescribeRouteTables"],fix:"Update AWSLoadBalancerControllerIAMPolicy to the current version, tag the public subnets, restart the controller."}];
+const mkr=el("g",{id:"mkr",style:"display:none"});el("circle",{r:15,fill:"#F43F5E"},mkr);tx(0,1,"\u2715",18,"#fff",700,"middle",mkr);
+const pc=id=>/^s/.test(id)?"#EF9F27":/^r/.test(id)?"#378ADD":"#B4B2A9";
+function flowOn(ids){pk.innerHTML="";fl=[];ids.forEach(id=>{const e=document.getElementById("p-"+id);e.classList.add("on");for(let j=0;j<3;j++){const d=el("circle",{r:5.5,fill:pc(id),style:"filter:drop-shadow(0 0 4px "+pc(id)+")"},pk);fl.push({el:e,d,len:e.getTotalLength(),o:j/3})}})}
+function clearFault(){document.querySelectorAll(".bad,.fixed").forEach(e=>e.classList.remove("bad","fixed"));document.querySelectorAll(".pa.dead").forEach(e=>e.classList.remove("dead"));mkr.style.display="none";fr.innerHTML="";[...fb.children].forEach(b=>b.classList.add("alt"))}
+let fi=-1;const L=x=>x.split(",").filter(Boolean);
+function breakIt(i){const f=FT[i];fi=i;clearFault();document.querySelectorAll(".node").forEach(e=>e.classList.remove("dim","on"));document.querySelectorAll(".pa").forEach(p=>p.classList.remove("on"));
+document.getElementById("n-api2").classList.remove("show");dots.querySelectorAll("i").forEach(d=>d.classList.remove("a"));
+L(f.bad).forEach(id=>document.getElementById("n-"+id).classList.add("bad"));L(f.dead).forEach(id=>document.getElementById("p-"+id).classList.add("dead"));
+flowOn(L(f.ok));if(f.mk){mkr.setAttribute("transform","translate("+f.mk+")");mkr.style.display=""}
+fb.children[i].classList.remove("alt");fr.innerHTML=`<h2>${f.n}</h2><h3>What you see</h3><p>${f.see}</p><h3>How to find it</h3><ul>${f.find.map(x=>"<li>"+x+"</li>").join("")}</ul><h3>Fix</h3><p>${f.fix}</p><div class="ctl"><button class="alt" style="background:var(--sky);color:#fff;border:0" onclick="fixIt()">Apply the fix</button></div>`}
+function fixIt(){const f=FT[fi],bad=L(f.bad);clearFault();bad.forEach(id=>{const n=document.getElementById("n-"+id);n.classList.add("fixed");setTimeout(()=>n.classList.remove("fixed"),2500)});
+flowOn([...L(f.ok),...L(f.dead)]);fr.innerHTML=`<h2>Fixed: ${f.n}</h2><p>Traffic now flows end to end.</p><div class="ctl"><button onclick="breakIt(${fi})">Break it again</button></div>`}
+FT.forEach((f,i)=>{const b=document.createElement("button");b.className="alt";b.textContent=f.n;b.onclick=()=>breakIt(i);fb.appendChild(b)});
+show(0);requestAnimationFrame(tick);
+</script></body></html>
