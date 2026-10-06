@@ -13,3 +13,5 @@
 
 # OS
 .DS_Store
+k8s/db-secret.yaml
+k8s/db-secret.yaml
