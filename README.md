@@ -138,4 +138,7 @@ Phase 6 - Field sensor: on the Azure VM run the sensor container with `API_URL=h
 - Single VPN tunnel and single NAT gateway (no failover)
 - Flask development server and plain HTTP inside the VPN tunnel
 
-See `docs/architecture-reference.docx` for the architecture diagram, traffic flow, and resource breakdown.
+See `docs/architecture-reference.docx` for the architecture diagram, traffic flow, and resource breakdown.:
+
+##video-link 
+https://drive.google.com/drive/folders/1IVWVNGElAFVpcOV6H-k08_wABdnSHuJ6?usp=sharing
