@@ -12,7 +12,10 @@ displays it on a public dashboard.
 - **CI/CD:** GitHub Actions tests and pushes images to Docker Hub on merge to `main`. Manifests are applied with kubectl.
 - **Build:** console build is complete and documented in `docs/`. A Terraform replica is planned on a separate branch to prove reproducibility.
 
-See `docs/` for the project plan and architecture diagram.
+See docs/ for the project plan.	
+
+
+![Architecture](docs/multicloud-architecture.png)
 
 ## Repo Structure
 ```
