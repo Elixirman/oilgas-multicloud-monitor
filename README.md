@@ -12,9 +12,9 @@ displays it on a public dashboard.
 - **CI/CD:** GitHub Actions tests and pushes images to Docker Hub on merge to `main`. Manifests are applied with kubectl.
 - **Build:** console build is complete and documented in `docs/`. A Terraform replica is planned on a separate branch to prove reproducibility.
 
-See docs/ for the project plan.	
+See `docs/` for the architecture diagram, interactive walkthrough and presentation.	
 
-
+## Architecture
 ![Architecture](docs/multicloud-architecture.png)
 
 ## Repo Structure
@@ -24,9 +24,11 @@ azure-field/         Sensor simulator (Dockerfile + script)
 dashboard-app/       Dashboard service (port 5000)
 db/schema.sql        Creates the readings table
 k8s/                 Kubernetes manifests
-aws/ azure/ vpn/     Terraform (planned)
+aws/ azure/ vpn/     Terraform (aws and azure in progress, vpn planned)
 .github/workflows/   CI/CD pipeline
-docs/                Diagrams, screenshots, project plan
+docs/                Architecture diagram, interactive index.html, presentation deck
+CONTRIBUTORS.md      Team members and roles
+create_issues.sh     Creates the project issues
 ```
 
 ## Workflow
@@ -141,7 +143,7 @@ Phase 6 - Field sensor: on the Azure VM run the sensor container with `API_URL=h
 - Single VPN tunnel and single NAT gateway (no failover)
 - Flask development server and plain HTTP inside the VPN tunnel
 
-See `docs/architecture-reference.docx` for the architecture diagram, traffic flow, and resource breakdown.:
+See `docs/index.html` for the interactive walkthrough and `docs/Oilgas_Multicloud_Assessor_Deck.pptx` for the presentation.
 
-##video-link 
+## Video walkthrough 
 https://drive.google.com/drive/folders/1IVWVNGElAFVpcOV6H-k08_wABdnSHuJ6?usp=sharing
