@@ -15,7 +15,7 @@ displays it on a public dashboard.
 See `docs/` for the architecture diagram, interactive walkthrough and presentation.	
 
 ## Architecture
-![Architecture](docs/multicloud-architecture.png)
+![Architecture](docs/xmulticloud-architecture.png)
 
 ## Repo Structure
 ```
