@@ -17,6 +17,8 @@ See `docs/` for the architecture diagram, interactive walkthrough and presentati
 ## Architecture
 ![Architecture](docs/xmulticloud-architecture.png)
 
+**Assessment evidence:** [Requirements checklist with screenshots](docs/REQUIREMENTS.md)
+
 ## Repo Structure
 ```
 api/                 API service (Flask, port 6000)
