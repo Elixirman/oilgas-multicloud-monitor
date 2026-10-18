@@ -99,7 +99,8 @@ kubectl apply -f k8s/dashboard.yaml
 kubectl apply -f k8s/ingress.yaml
 kubectl apply -f k8s/hpa.yaml
 ```
-**Live write-up:** [K8 walkthrough](https://github.com/Elixirman/oilgas-multicloud-monitor/Index-EKS-Dev.html)
+**Live write-up:** [K8 walkthrough](https://github.io)
+
 Phase 5 - Edge: wait for the ingress ADDRESS (the ALB hostname). Create a CloudFront distribution with the ALB as origin: HTTP only, port 80, viewer policy "Redirect HTTP to HTTPS", cache policy CachingDisabled.
 
 Phase 6 - Field sensor: on the Azure VM run the sensor container with `API_URL=http://<api-internal NLB hostname>:6000/api/ingest`, then confirm readings appear on the CloudFront dashboard.
