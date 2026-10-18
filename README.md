@@ -79,8 +79,11 @@ Open http://localhost:5000
 ## Deployment Instructions
 
 Phase 1 - Networks: AWS VPC (public and private subnets, IGW, NAT, route tables, security groups) and Azure VNet (field-subnet, GatewaySubnet, NSG). CIDRs must not overlap.
+
 Phase 2 - VPN: AWS virtual private gateway, customer gateway and VPN connection; Azure VPN gateway, local network gateway and connection. Use the same pre-shared key on both sides (avoid special characters such as `!`). Enable route propagation on both AWS route tables.
+
 Phase 3 - Containers: images are built and pushed by `.github/workflows/ci-cd.yml`.
+
 Phase 4 - Kubernetes:
 - Create the EKS cluster with enough pod capacity (t3.small allows 11 pods per node).
 - Install the AWS Load Balancer Controller (Helm) and metrics-server.
@@ -96,7 +99,9 @@ kubectl apply -f k8s/dashboard.yaml
 kubectl apply -f k8s/ingress.yaml
 kubectl apply -f k8s/hpa.yaml
 ```
+**Live write-up:** [K8 walkthrough](https://github.com/Elixirman/oilgas-multicloud-monitor/Index-EKS-Dev.html)
 Phase 5 - Edge: wait for the ingress ADDRESS (the ALB hostname). Create a CloudFront distribution with the ALB as origin: HTTP only, port 80, viewer policy "Redirect HTTP to HTTPS", cache policy CachingDisabled.
+
 Phase 6 - Field sensor: on the Azure VM run the sensor container with `API_URL=http://<api-internal NLB hostname>:6000/api/ingest`, then confirm readings appear on the CloudFront dashboard.
 
 ## Troubleshooting
