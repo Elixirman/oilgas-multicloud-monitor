@@ -99,7 +99,7 @@ kubectl apply -f k8s/dashboard.yaml
 kubectl apply -f k8s/ingress.yaml
 kubectl apply -f k8s/hpa.yaml
 ```
-**Live write-up:** [K8 walkthrough](https://github.io)
+**Live write-up:** [K8 walkthrough](https://htmlpreview.github.io/?https://github.com/Elixirman/oilgas-multicloud-monitor/blob/main/docs/Index-EKS-Dev.html)
 
 Phase 5 - Edge: wait for the ingress ADDRESS (the ALB hostname). Create a CloudFront distribution with the ALB as origin: HTTP only, port 80, viewer policy "Redirect HTTP to HTTPS", cache policy CachingDisabled.
 
